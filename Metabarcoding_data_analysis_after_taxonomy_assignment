@@ -37,6 +37,9 @@ class(ASV_tab_RECOI) <- "matrix"
 rare_RECOI <- rarecurve(ASV_tab_RECOI, step=100, lwd=1, ylab="ASVs",
                     label=T,tidy = T,main="Rarefaction Curve for all samples") 
 
+#supplementary information figure 2
+ggsave("rarefaction_curve.png", width = 11.69, height = 8.27, dpi = 300)
+
 library(ggplot2)
 ggplot(rare_RECOI, aes(x = Sample, y = Species, color=Site)) +
   theme_bw() + 
@@ -94,5 +97,6 @@ ps_re_COI_edit_prune <- filter_taxa(ps_re_COI_edit, function(x){sum(x > 0) > 1},
 
 #remove sample that have less than 100 reads
 ps_re_COI_edit_prune <- prune_samples(sample_sums(ps_re_COI_edit) > 100, ps_re_COI_edit)
+
 
 
