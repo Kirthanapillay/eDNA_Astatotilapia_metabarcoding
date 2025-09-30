@@ -1,30 +1,98 @@
-#Metabarcoding data analysis after taxonomy assignment
+#Metabarcoding data analysis after taxonomy assignment in R
 
-########input the taxonomy file from linux, use eight levels.tsv file (needs to be edited before, to 7 levels according to Phyloseq)###ps_tax <- read.csv("COI_taxonomy_tab_input.csv", header = T, row.names=1)
+########input the taxonomy file from linux, use eight levels.tsv file (needs to be edited before, to 7 levels according to Phyloseq)###
+ps_tax <- read.csv("COI_taxonomy_tab_input.csv", header = T, row.names=1)
 
-#import ASV file from DADA2 pipelineASV_tab <- read.csv("seqtab2.nonchim.csv", header = T, row.names=1)ASV_tab_t <- t(RE_ASV_tab)ps_tax.mat <- as.matrix(ps_tax, rownames.force=TRUE)#import metadatacichlid_metadata_COI <- read.csv("cichlid_metadata_COI.csv", sep = ",", header = T, row.names=1)library(phyloseq)ps_re_COI <- phyloseq(otu_table(ASV_tab_t, taxa_are_rows = T),                      tax_table(ps_tax.mat),                      sample_data(cichlid_metadata_COI))
+#import ASV file from DADA2 pipeline
+ASV_tab <- read.csv("seqtab2.nonchim.csv", header = T, row.names=1)
+ASV_tab_t <- t(RE_ASV_tab)
+
+ps_tax.mat <- as.matrix(ps_tax, rownames.force=TRUE)
+
+#import metadata
+cichlid_metadata_COI <- read.csv("cichlid_metadata_COI.csv", sep = ",", header = T, row.names=1)
+
+library(phyloseq)
+ps_re_COI <- phyloseq(otu_table(ASV_tab_t, taxa_are_rows = T),
+                      tax_table(ps_tax.mat),
+                      sample_data(cichlid_metadata_COI))
 
 #remove ASVs that are Unassigned/undetermined/unknown_phylum/phylum
-ps_re_COI_edit <- subset_taxa(ps_re_COI, Phylum != "Unassigned")ps_re_COI_edit <- subset_taxa(ps_re_COI_edit, Phylum != "undetermined")ps_re_COI_edit <- subset_taxa(ps_re_COI_edit, Phylum != "unknown_phylum")ps_re_COI_edit <- subset_taxa(ps_re_COI_edit, Phylum != "phylum")
-#remove ASVs of order Cichliformes
+ps_re_COI_edit <- subset_taxa(ps_re_COI, Phylum != "Unassigned")
+ps_re_COI_edit <- subset_taxa(ps_re_COI_edit, Phylum != "undetermined")
+ps_re_COI_edit <- subset_taxa(ps_re_COI_edit, Phylum != "unknown_phylum")
+ps_re_COI_edit <- subset_taxa(ps_re_COI_edit, Phylum != "phylum")
+
+#remove ASVs of order Cichliformes
 ps_re_COI_edit <- subset_taxa(ps_re_COI_edit, Order != "Cichliformes")
 
 ps_re_COI_edit<- prune_samples(sample_sums(ps_re_COI_edit)>0, ps_re_COI_edit)
 
 
-#rarefaction curvelibrary(vegan)ASV_tab_RECOI <- otu_table(ps_re_COI_edit)class(ASV_tab_RECOI) <- "matrix"
+#rarefaction curve
+library(vegan)
+ASV_tab_RECOI <- otu_table(ps_re_COI_edit)
+class(ASV_tab_RECOI) <- "matrix"
 
-rare_RECOI <- rarecurve(ASV_tab_RECOI, step=100, lwd=1, ylab="ASVs",                    label=T,tidy = T,main="Rarefaction Curve for all samples") library(ggplot2)ggplot(rare_RECOI, aes(x = Sample, y = Species, color=Site)) +  theme_bw() +   geom_line(show.legend = FALSE) +  xlim(0, 2000) +  geom_vline(xintercept=100, color= "red", linetype='dashed') +   labs(title="COI Rarefaction curves") + xlab("Sequenced Reads") + ylab('ASVs Detected')
+rare_RECOI <- rarecurve(ASV_tab_RECOI, step=100, lwd=1, ylab="ASVs",
+                    label=T,tidy = T,main="Rarefaction Curve for all samples") 
+
+library(ggplot2)
+ggplot(rare_RECOI, aes(x = Sample, y = Species, color=Site)) +
+  theme_bw() + 
+  geom_line(show.legend = FALSE) +
+  xlim(0, 2000) +
+  geom_vline(xintercept=100, color= "red", linetype='dashed') + 
+  labs(title="COI Rarefaction curves") + xlab("Sequenced Reads") + ylab('ASVs Detected')
 
 #alpha diversity plot
 
-alpha_RECOI <- plot_richness(physeq = ps_re_COI_edit,                        x = "SampleSite",                       measures = c("Observed","Shannon", "Chao1"),                       color="SampleSite") +  ggplot2::geom_point(aes(color=SampleSite)) +  ggplot2::geom_boxplot(aes(colour=factor(SampleSite), fill=  SampleSite), alpha=0.1) +  ggforce::geom_sina(alpha=0.5, aes(colour=SampleSite)) +  ggplot2::labs(colour = "Site_name") +  theme_bw() +  theme(panel.grid=element_blank(),        #axis.text.y.left = element_text(size = 10),                         axis.text.x = element_text(hjust = 1, vjust = 1, angle = 45))+  labs(x="SampleSite", colour="SampleSite") 
+alpha_RECOI <- plot_richness(physeq = ps_re_COI_edit, 
+                       x = "SampleSite",
+                       measures = c("Observed","Shannon", "Chao1"),
+                       color="SampleSite") +
+  ggplot2::geom_point(aes(color=SampleSite)) +
+  ggplot2::geom_boxplot(aes(colour=factor(SampleSite), fill=  SampleSite), alpha=0.1) +
+  ggforce::geom_sina(alpha=0.5, aes(colour=SampleSite)) +
+  ggplot2::labs(colour = "Site_name") +
+  theme_bw() +
+  theme(panel.grid=element_blank(),
+        #axis.text.y.left = element_text(size = 10),                 
+        axis.text.x = element_text(hjust = 1, vjust = 1, angle = 45))+
+  labs(x="SampleSite", colour="SampleSite") 
 
-#Figure 2 on manuscriptggsave("alpha_RECOI.png", width = 11.69, height = 8.27, dpi = 300)#Kruskal Wallis ranked sum test to test for differences in alpha diversity between the ecotypesps_re_COI_edit_otu <- otu_table(ps_re_COI_edit)ps_re_COI_edit_otu <- as.data.frame(ps_re_COI_edit_otu)ps_re_COI_edit_otu.t <- t(ps_re_COI_edit_otu)ps_re_COI_edit_otu_samples <- data.frame(sample_data(ps_re_COI_edit))ps_re_COI_edit_otu_samples$shannon.vegan <- diversity(ps_re_COI_edit_otu.t, index="shannon")
-#check for normalityshapiro.test(ps_re_COI_edit_otu_samples$shannon.vegan)
-#use kruskal wallis rank sum test when p<0.05 from Shapiro test as the data is not normally distributedkruskal.test(shannon.vegan ~ SampleSite, data=ps_re_COI_edit_otu_samples)dunn_test(shannon.vegan ~ SampleSite,          data=ps_re_COI_edit_otu_samples,          p.adjust.method="bonferroni",          detailed=TRUE) 
+#Figure 2 on manuscript
+ggsave("alpha_RECOI.png", width = 11.69, height = 8.27, dpi = 300)
+
+
+#Kruskal Wallis ranked sum test to test for differences in alpha diversity between the ecotypes
+ps_re_COI_edit_otu <- otu_table(ps_re_COI_edit)
+ps_re_COI_edit_otu <- as.data.frame(ps_re_COI_edit_otu)
+ps_re_COI_edit_otu.t <- t(ps_re_COI_edit_otu)
+
+ps_re_COI_edit_otu_samples <- data.frame(sample_data(ps_re_COI_edit))
+
+ps_re_COI_edit_otu_samples$shannon.vegan <- diversity(ps_re_COI_edit_otu.t, index="shannon")
+
+#check for normality
+shapiro.test(ps_re_COI_edit_otu_samples$shannon.vegan)
+
+#use kruskal wallis rank sum test when p<0.05 from Shapiro test as the data is not normally distributed
+
+kruskal.test(shannon.vegan ~ SampleSite, data=ps_re_COI_edit_otu_samples)
+
+dunn_test(shannon.vegan ~ SampleSite,
+          data=ps_re_COI_edit_otu_samples,
+          p.adjust.method="bonferroni",
+          detailed=TRUE) 
 
 
 #filter data to remove low count asks and samples with <100 reads according to the rarefaction curve
 
-#remove taxa that appears in 1 sample only ps_re_COI_edit_prune <- filter_taxa(ps_re_COI_edit, function(x){sum(x > 0) > 1}, prune = TRUE)#remove sample that have less than 100 readsps_re_COI_edit_prune <- prune_samples(sample_sums(ps_re_COI_edit) > 100, ps_re_COI_edit)
+#remove taxa that appears in 1 sample only 
+ps_re_COI_edit_prune <- filter_taxa(ps_re_COI_edit, function(x){sum(x > 0) > 1}, prune = TRUE)
+
+#remove sample that have less than 100 reads
+ps_re_COI_edit_prune <- prune_samples(sample_sums(ps_re_COI_edit) > 100, ps_re_COI_edit)
+
+
