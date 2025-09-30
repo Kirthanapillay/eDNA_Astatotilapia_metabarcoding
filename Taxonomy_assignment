@@ -1,0 +1,14 @@
+
+
+##return to linux to assign taxonomy using blastn and NCBI database
+##ensure that 20 top hits are produced
+
+blastn -query ASVs_COI.fa -db blast_db_Midori_COI -num_threads 12 -out FL_COI_.blastn.nt.tab -outfmt '6 qseqid qlen sseqid pident length qstart qend sstart send evalue bitscore staxids' -max_target_seqs 20 -evalue 1e-4
+
+
+##use python code from https://github.com/Joseph7e/Assign-Taxonomy-with-BLAST to assign taxonomy from the 20 top hits from each ASV
+##Rather than relying on a single blast hit the program takes the top 20 blast hits for each ASV
+##cutoff species set to 97, cutoff family set to 90, cutoff phylum set to 80, hits to consider 20
+
+python taxonomy_assignment_BLAST.py  ASVs_COI.fa expanded_ncbi_taxonomy.tsv --hits_to_consider 20 --length_percentage 0.90 --blast_file  FL_COI_.blastn.nt.tab --ncbi_nt --output_dir COI_output_taxonomic_assignement
+
