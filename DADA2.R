@@ -93,6 +93,7 @@ asv_fasta<-c(rbind(seqtab2.nonchim, asv_seqs))
 write(asv_fasta, "ASVs_COI.fa")
 
 #import ASVs_COI.fa into linux to assign taxonomy using blast
-@repeat above for 18S sequences
+#repeat above for 18S sequences
+
 
 
