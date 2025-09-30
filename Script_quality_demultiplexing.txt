@@ -1,0 +1,158 @@
+## This script was run on Linux
+the pipeline starts checking the quality of the reads in the fastq files
+
+#Make Fastq list
+
+ls *_L001_R1_001.fastq.gz > FastqList
+sed -i 's/_L001_R1_001.fastq.gz//g' FastqList
+
+
+#count number of sequences in Fastq zipped file 
+echo $(zcat yourfile.fastq.gz|wc -l)/4|bc
+
+#check quality of reads using fastqc and multiqc
+
+#!/usr/bin/perl
+
+
+unless ($#ARGV == 0)
+
+{
+
+   print "Usage: fastqc.pl FastqList\n";
+
+die;
+}
+
+
+open (INLIST, "<$ARGV[0]") || die;
+
+
+$indir = "/scratch/b.bspa52/Indian_metabarcoding/";
+$outdir = "/scratch/b.bspa52/Indian_metabarcoding/";
+
+
+while (<INLIST>) {
+$lib = $_;
+chomp($lib);
+
+$read1 = $lib . "_Metagenome_R1.fastq";
+$read2 = $lib . "_Metagenome_R2.fastq";
+
+
+# run fastqc on the raw data
+system("fastqc $indir/$read1 --outdir=$outdir");
+system("fastqc $indir/$read2 --outdir=$outdir");
+
+
+}
+
+exit;
+
+##run multi multiQC on the fasted files
+
+#### Cutadapt to remove the primer regions and retain only reads from which the primers were removed.
+##COI primer
+
+#!/usr/bin/perl
+
+
+unless ($#ARGV == 0)
+
+{
+
+   print "Usage: 2_cutadapt.pl FastqList\n";
+
+die;
+}
+
+
+open (INLIST, "<$ARGV[0]") || die;
+
+
+$indir = "/fastdata-sharc/bo4gka/";
+$outdir = "/fastdata-sharc/bo4gka/";
+
+
+while (<INLIST>) {
+$lib = $_;
+chomp($lib);
+
+$read1 = $lib . "_L001_R1_001.fastq.gz";
+$read2 = $lib . "_L001_R2_001.fastq.gz";
+
+$cutout1 = $lib . "_cutout.1.fastq.gz";
+$cutout2 = $lib . "_cutout.2.fastq.gz";
+
+
+# use Trimmomatic to clip adaptor sequences & trim low-quality bases
+system("cutadapt -g GGWACWRGWTGRACWITITAYCCYCC -G ^TAIACYTCIGGRTGICCRAARAAYCA --discard-untrimmed -o $outdir/$cutout1 -p $outdir/$cutout2 $indir/$read1 $indir/$read2");
+
+}
+
+
+##18S primer
+
+#!/usr/bin/perl
+
+
+unless ($#ARGV == 0)
+
+{
+
+   print "Usage: 2_cutadapt.pl FastqList\n";
+
+die;
+}
+
+
+open (INLIST, "<$ARGV[0]") || die;
+
+
+$indir = "/fastdata-sharc/bo4gka/";
+$outdir = "/fastdata-sharc/bo4gka/";
+
+
+while (<INLIST>) {
+$lib = $_;
+chomp($lib);
+
+$read1 = $lib . "_L001_R1_001.fastq.gz";
+$read2 = $lib . "_L001_R2_001.fastq.gz";
+
+$cutout1 = $lib . "_cutout.1.fastq.gz";
+$cutout2 = $lib . "_cutout.2.fastq.gz";
+
+
+# use Trimmomatic to clip adaptor sequences & trim low-quality bases
+system("cutadapt -g CCAGCASCYGCGGTAATTCC -G ^ACTTTCGTTCTTGATYRA --discard-untrimmed -o $outdir/$cutout1 -p $outdir/$cutout2 $indir/$read1 $indir/$read2");
+
+}
+
+
+##reads are imported into R for DADA2 pipeline
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
