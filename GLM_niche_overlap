@@ -1,31 +1,0 @@
-#Generlaised linear model in R using Mvabund
-
-library(ggplot2)library(reshape2)library(tidyr)library(RColorBrewer)library(mvabund)library(reshape2)library(plyr)library(plotrix)
-
-ps_COI_mvabund_tax <- read.csv("ps_COI_mvabund_tax.csv", sep = ",", header = T, row.names=1)
-
-ps_COI_mvabund_tax <- as.data.frame(ps_COI_mvabund_tax)#sample file meta <- read.csv("PS_COI_date_sample.csv", header=TRUE, row.names=1) #sep = "",COI_raw_reads_MVAbund <- read.csv("COI_raw_reads_MVABUND.csv", sep = ",", header = T, row.names=1)COI_raw_reads_MVAbund_t <- t(COI_raw_reads_MVAbund)asv <- COI_raw_reads_MVAbundtaxa <- ps_COI_mvabund_taxOTUdata<-asv/rowSums(asv)OTUdata<-OTUdata[,order(colSums(OTUdata),decreasing=TRUE)]## add total number of reads to metadata for mvabund model# make sure there are the same lengthmeta2<-meta[rownames(asv),]asv$Sample.total.reads<-rowSums(asv)head(asv)asv$SampleID<-rownames(asv)meta2<-metameta2$SampleID<-rownames(meta2)meta2$Sample.total.reads<-asv$Sample.total.reads[match(asv$SampleID, meta2$SampleID)]#Assign the otu names to a taxa level (order). Using number of reads for mvabund with an offset# The Sequence id should be the in the rowotut<-as.data.frame(t(asv))head(otut)rownames(otut)rownames(taxa)otut$OTU.ID<-rownames(otut)taxa$OTU.ID<-rownames(taxa)#Merge all taxa id to the otu table or use match to match one at a time.otut$Order<-taxa$Order[match(otut$OTU.ID, taxa$OTU.ID)]#names(otu)otu2<-otutotu2<-merge(otu2, taxa, by = "OTU.ID", all.y = TRUE )names(otu2)# reorder the sequence abundance data so they appear in the first columns columns namesotu2<-otu2[, c(2:163,1,164:170)]names(otu2)#Aggregate (collapse multiple of the same Order) the Order and take the sum # 1) make long data names(otu2)otu.long <- gather(otu2, SampleID, no.reads, 1:162, factor_key=TRUE)names(otu.long)str(otu.long)#change no of reads column from character to number otu.long$no.reads<-as.numeric(otu.long$no.reads)# you can change "order" to the taxonomic level you want to collapse otu.long.Order<-ddply(otu.long,  .( SampleID, Order.y), summarize,                      sum.no.reads= sum(no.reads),  mean.no.reads = mean(no.reads),                       sd = (sd(no.reads)), var = (var(no.reads)),SE = (std.error(no.reads)))names(otu.long.Order)# make data wide again for mvabund OTU.Order <- dcast(otu.long.Order, SampleID ~ Order.y, value.var="sum.no.reads")#add sample ID to rownamesnames(OTU.Order)# move sample ID to the rownamerownames(OTU.Order)<-OTU.Order[,1]# remove samples ID column as mvabund can only use number in the multivariate response OTU.Order$SampleID<-NULLstr(OTU.Order)#this is you mvabund object that you put in the model - it is a multivariate response so keeps the data in the wide format mv.OTU.Order <- mvabund(OTU.Order) str(mv.OTU.Order)# you can plot the mean vs variance and show that the data best fit the negative binomial distribution meanvar.plot() # this is the function you can search this in the R help and see if it makes sense, I can't get it to work and I think it might be because the data are not integers but I am not sure! #https://besjournals.onlinelibrary.wiley.com/doi/10.1111/j.2041-210X.2012.00190.xattach(meta2)meanvar.plot(mv.OTU.Order~Standard_length, col=as.numeric(Field_ID.1))#make sure the metadata is the same length#add sample ID row sums to medata datanames(meta2)str(meta2)#make the model with the variable ft_S = manyglm(mv.OTU.Order ~ Ecotype , family = "negative binomial", offset = Sample.total.reads, data=meta2)
-plot(ft_S, which =2)
-#run anova to test for effects of predictors on the multivariate responseanova(ft_S, resamp = "montecarlo", test = "LR")
-
-
-ft_SL = manyglm(mv.OTU.Order ~ Standard_length , family = "negative binomial", offset = Sample.total.reads, data=meta2)
-plot(ft_SL, which =2)anova(ft_SL, resamp = "montecarlo", test = "LR")
-
-
-#niche overlap
-
-COI_raw_reads_MVAbund <- read.csv("COI_raw_reads_MVABUND.csv", sep = ",", header = T, row.names=1)COI_raw_reads_MVAbund_t <- t(COI_raw_reads_MVAbund)
-
-ps_COI_mvabund_tax_1 <- read.csv("ps_COI_mvabund_tax.csv", sep = ",", header = T, row.names=1)ps_COI_mvabund_tax_1.mat <- as.matrix(ps_COI_mvabund_tax_1)
-
-cichlid_metadata_RECOI <- read.csv("cichlid_metadata_RECOI.csv", sep = ",", header = T, row.names=1)ps_COI_mvabund_1 <- phyloseq(otu_table(COI_raw_reads_MVAbund_t, taxa_are_rows = T),                           tax_table(ps_COI_mvabund_tax_1.mat),                           sample_data(cichlid_metadata_RECOI))ps_COI_mvabund_agg <- tax_transform(ps_COI_mvabund_1, trans = "binary", rank = "Order", keep_counts=TRUE)ps_COI_mvabund_agg_counts <- ps_COI_mvabund_agg@countsps_COI_mvabund_agg_counts <- as.data.frame(ps_COI_mvabund_agg_counts)ps_COI_mvabund_agg_counts$samplesite <- ps_COI_mvabund_1@sam_data$SampleSitewrite.csv(ps_COI_mvabund_agg_counts, "ps_COI_mvabund_agg_counts.csv")COI_bipartite_input <- read.csv("Bipartite_input_COI.csv", sep = ",", header = T, row.names=1)
-
-library(bipartite)
-
-#Niche overlap calculated using Horn–Morisita method
-networklevel(COI_bipartite_input,  dist="horn")#values here given for higher level - predator and lower level - prey#Niche.overlap.HL               niche.overlap.LL #0.3030912                      0.6753288 
-
-
-
-
