@@ -99,4 +99,17 @@ ps_re_COI_edit_prune <- filter_taxa(ps_re_COI_edit, function(x){sum(x > 0) > 1},
 ps_re_COI_edit_prune <- prune_samples(sample_sums(ps_re_COI_edit) > 100, ps_re_COI_edit)
 
 
+# calculate average of relative read abundance, use subset function to identify relative abundance of each ecotype
+data <-
+  ps_re_COI_edit %>%
+  tax_glom("Phylum") %>%
+  transform_sample_counts(function(x)100* x / sum(x)) %>%
+  psmelt() %>%
+  as_tibble()
+
+data %>%
+  group_by(Phylum) %>%
+  summarise(Abundance = mean(Abundance)) %>%
+  arrange(-Abundance)
+
 
