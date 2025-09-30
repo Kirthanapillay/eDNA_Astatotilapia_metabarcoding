@@ -1,16 +1,0 @@
-#Beta analysis using permanova and generating nmds figure 3 in R
-
-#permanova using adonis function to determine differences between the ecotypes
-library(pairwiseAdonis)
-ps_re_COI_edit_RA_bray <- phyloseq::distance(ps_re_COI_edit_RA, method = "bray", type = "samples")pairwise.adonis(ps_re_COI_edit_RA_bray, sample_data(ps_re_COI_edit_RA)$SampleSite,                 p.adjust.m = "bonferroni", sim.method = "bray", perm = 10000)
-ps_re_COI_edit_RA_otu <- otu_table(ps_re_COI_edit_RA)ps_re_COI_edit_RA_otu <- as.data.frame(ps_re_COI_edit_RA_otu)ps_re_COI_edit_RA_otu_t <- t(ps_re_COI_edit_RA_otu)ps_re_COI_edit_RA_sam <- sample_data(ps_re_COI_edit_RA)ps_re_COI_edit_RA_sam <- as.data.frame(ps_re_COI_edit_RA_sam)ps_re_COI_edit_RA_tax <- tax_table(ps_re_COI_edit_RA)ps_re_COI_edit_RA_otu_t_nmds = metaMDS(ps_re_COI_edit_RA_otu_t, distance = "bray", trymax = 1000, k = 3)ps_re_COI_edit_RA_otu_t_nmds_data <- ps_re_COI_edit_RA_otu_t_nmds $pointsps_re_COI_edit_RA_otu_t_nmds_data <- as.data.frame(ps_re_COI_edit_RA_otu_t_nmds_data)ps_re_COI_edit_RA_otu_t_nmds_data $Site <- ps_re_COI_edit_RA_sam $SampleSitemy_theme <- theme(panel.background = element_blank(),      panel.border = element_rect(fill = NA, linewidth = 1),      strip.background = element_rect(fill = "white",                                       color = "white", linewidth = 1),      text = element_text(size = 14),      panel.grid.major = element_line(colour = "white", linewidth = 0.1),      panel.grid.minor = element_line(colour = "white", linewidth = 0.1))COI_nmds <- ggplot(ps_re_COI_edit_RA_otu_t_nmds_data, aes(x = MDS1, y = MDS2,colour =  Site)) +   geom_point(size = 2, aes(colour =  Site))+  scale_color_manual(values=nmds_colour)+  scale_fill_manual(values=nmds_colour)+  theme_bw() +  geom_convexhull(alpha = 0.3,aes(fill = Site))+  stat_ellipse(geom="polygon",               aes(fill=Site),               alpha=0.25,               linetype=2) +  my_theme +  annotate("text", x=2.3, y=2, label= "p<0.001")+  ggtitle("A")
-
-
-#repeat for 18S using 18S reads/phyloseq objects
-#combine the figures
-
-library(ggpubr)
-ggarrange(COI_nmds, 18S_nmds,          nrow = 2,          align= "hv", common.legend = T)
-
-Figure 3ggsave("nMDS.pdf", width = 16, height = 12, dpi = 300)
-
