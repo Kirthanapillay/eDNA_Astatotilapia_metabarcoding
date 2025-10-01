@@ -80,20 +80,19 @@ write.csv(seqtab2.nonchim, "seqtab2.nonchim_COI.csv")
 
 #make into fasta format
 #Get ASV sequences
-asv_seqs <- colnames(seqtab2.nonchim)
-asv_headers <- vector(dim(seqtab2.nonchim)[2], mode="character")
+seqtab2.nonchim <- as.data.frame(seqtab2.nonchim)
+seqs <- colnames(seqtab2.nonchim)
 
-for (i in 1:dim(seqtab2.nonchim)[2]) {
-  asv_headers[i] <- paste(">ASV", i , sep="")
-  
-}
+headers <- paste0(">seq", seq_along(seqs))
+
+fasta_lines <- c(rbind(headers, seqs))
 
 #Write to FASTA file
-asv_fasta<-c(rbind(seqtab2.nonchim, asv_seqs))
-write(asv_fasta, "ASVs_COI.fa")
+writeLines(fasta_lines, "seqtab_COI.fasta")
 
 #import ASVs_COI.fa into linux to assign taxonomy using blast
 #repeat above for 18S sequences
+
 
 
 
